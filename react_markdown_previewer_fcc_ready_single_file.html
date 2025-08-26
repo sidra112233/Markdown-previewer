@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Markdown Previewer — React + Marked</title>
+  <!-- Bootstrap (optional, for cute styling) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- GitHub Markdown styles to make preview look familiar -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.7.0/github-markdown.min.css">
+  <!-- Marked (GitHub-flavored Markdown parser) -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- React + ReactDOM (via ESM shim so we can keep one HTML file) -->
+  <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.3.1",
+        "react-dom": "https://esm.sh/react-dom@18.3.1"
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --bg: #0b1220;          /* oxford blue-ish */
+      --bg-soft: #0f1a2b;     /* deeper panel */
+      --ink: #e9f1ff;         /* powder/mint cream blend */
+      --accent: #2f6feb;      /* yale blue vibe */
+      --accent-2: #153e75;    /* berkeley blue vibe */
+    }
+    html, body { height: 100%; }
+    body {
+      background: radial-gradient(1200px 600px at 10% -10%, #122038 0%, transparent 60%),
+                  radial-gradient(1200px 800px at 110% 110%, #0f1a2b 0%, transparent 60%),
+                  var(--bg);
+      color: var(--ink);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+    }
+    .app-title {
+      letter-spacing: 0.4px;
+    }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+      border-radius: 18px;
+    }
+    textarea#editor {
+      min-height: 50vh;
+      resize: vertical;
+      background: #091325;
+      color: var(--ink);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+    }
+    /* Make preview look like GitHub */
+    #preview {
+      background: #091325;
+      color: #dbe7ff;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      min-height: 50vh;
+      overflow-x: auto;
+    }
+    #preview.markdown-body h1, #preview.markdown-body h2, #preview.markdown-body h3 {
+      border-bottom-color: rgba(255,255,255,0.12);
+    }
+    a { color: var(--accent); }
+    a:hover { color: #7aa2ff; }
+    .badge-soft {
+      background: linear-gradient(180deg, rgba(47,111,235,0.2), rgba(47,111,235,0.08));
+      border: 1px solid rgba(47,111,235,0.4);
+      color: #cfe0ff;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+<script src="https://cdn.freecodecamp.org/testable-projects-fcc/v1/bundle.js"></script>
+  <script type="module">
+    import React, { useEffect, useMemo, useState } from 'react';
+    import { createRoot } from 'react-dom';
+
+    // Default markdown that covers ALL required elements for FCC tests
+    const DEFAULT_MD = `# Welcome to *Your* Markdown Previewer
+
+## A sleek, React-powered live demo
+
+> "Markdown that renders as you type — delightful!"
+>
+> — _You, probably_
+
+Here's a link to **FreeCodeCamp**: [Visit the curriculum](https://www.freecodecamp.org/learn)
+
+Inline code looks like \`const x = 42\` inside a sentence.
+
+\`
+// Fenced code block (no lang)
+function greet(name){
+  return 'Hello, ' + name + '!';
+}
+console.log(greet('world'));
+\`
+
+- List items? Check.
+- Another item with **bold** and *italics*.
+- One more, just for fun.
+
+1. And an ordered list
+2. Because why not
+
+![FCC Logo](https://upload.wikimedia.org/wikipedia/commons/3/39/FreeCodeCamp_logo.png)
+
+**Bonus:** Line breaks below (carriage returns → <br>)
+First line  \\
+Second line  \\
+Third line
+`;
+
+    // Configure marked for GitHub-flavored markdown + line breaks
+    marked.setOptions({
+      gfm: true,
+      breaks: true
+    });
+
+    function App() {
+      const [text, setText] = useState(DEFAULT_MD);
+
+      const html = useMemo(() => {
+        try {
+          return marked.parse(text ?? '');
+        } catch (e) {
+          return `<pre class="text-danger">${String(e)}</pre>`;
+        }
+      }, [text]);
+
+      // Ensure initial markdown renders on first load (User Story #6)
+      useEffect(() => {
+        // no-op: state already initialized with DEFAULT_MD
+      }, []);
+
+      return (
+        React.createElement('div', { className: 'container py-4' },
+          React.createElement('div', { className: 'd-flex align-items-center justify-content-between mb-4' },
+            React.createElement('h1', { className: 'app-title h3 m-0' }, 'Markdown Previewer'),
+            React.createElement('span', { className: 'badge rounded-pill badge-soft px-3 py-2' }, 'React + Marked')
+          ),
+          React.createElement('div', { className: 'row g-4' },
+            React.createElement('div', { className: 'col-12 col-lg-6' },
+              React.createElement('div', { className: 'card p-3 h-100' },
+                React.createElement('label', { className: 'form-label fw-semibold', htmlFor: 'editor' }, 'Editor'),
+                React.createElement('textarea', {
+                  id: 'editor', // User Story #1
+                  className: 'form-control',
+                  value: text,
+                  onChange: (e) => setText(e.target.value), // User Story #3
+                  spellCheck: 'false'
+                })
+              )
+            ),
+            React.createElement('div', { className: 'col-12 col-lg-6' },
+              React.createElement('div', { className: 'card p-3 h-100' },
+                React.createElement('label', { className: 'form-label fw-semibold', htmlFor: 'preview' }, 'Preview'),
+                React.createElement('div', {
+                  id: 'preview', // User Story #2
+                  className: 'markdown-body',
+                  dangerouslySetInnerHTML: { __html: html } // User Story #4 & #6
+                })
+              )
+            )
+          )
+        )
+      );
+    }
+
+    const root = createRoot(document.getElementById('root'));
+    root.render(React.createElement(App));
+  </script>
+</body>
+</html>
